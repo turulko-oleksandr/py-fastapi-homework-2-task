@@ -22,6 +22,7 @@ from src.schemas.movies import MovieCreate, MovieDetailSchema, MovieUpdate
 router = APIRouter()
 MOVIES_BASE_PATH = "/theater/movies/"
 
+
 @router.get("/movies/", response_model=MovieListResponseSchema)
 async def list_movies(
         page: int = Query(1, ge=1),

@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
 
+
 class MovieListItemSchema(BaseModel):
     id: int
     name: str
@@ -12,6 +13,7 @@ class MovieListItemSchema(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
 
 class MovieListResponseSchema(BaseModel):
     movies: List[MovieListItemSchema]
