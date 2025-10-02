@@ -132,7 +132,11 @@ async def create_movie(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Movie already exists.")
     except exists:
-        raise HTTPException(status_code=409, detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.")
+        raise HTTPException(
+            status_code=409,
+            detail=f"A movie with the name '{movie.name}' "
+                   f"and release date '{movie.date}' already exists."
+        )
 
     return new_movie
 
