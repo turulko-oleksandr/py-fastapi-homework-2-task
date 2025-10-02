@@ -116,18 +116,23 @@ async def create_movie(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
         actors=actors,
         languages=languages
     )
-    db.add(new_movie)
-    await db.commit()
-    await db.refresh(
-        new_movie,
-        attribute_names=[
-            "country",
-            "genres",
-            "actors",
-            "languages"
-        ],
-        with_for_update=None
-    )
+    try:
+        db.add(new_movie)
+        await db.commit()
+        await db.refresh(
+            new_movie,
+            attribute_names=[
+                "country",
+                "genres",
+                "actors",
+                "languages"
+            ],
+            with_for_update=None
+        )
+    except IntegrityError:
+        raise HTTPException(status_code=400, detail="Movie already exists.")
+    except exists:
+        raise HTTPException(status_code=409, detail=f"A movie with the name '{movie.name}' and release date '{movie.date}' already exists.")
 
     return new_movie
 
@@ -167,17 +172,18 @@ async def update_movie(movie_id: int, update_data: MovieUpdate, db: AsyncSession
     movie = await db.get(MovieModel, movie_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
+    ERROR_MESSAGE = "Invalid input data."
 
     if update_data.score is not None and not (0 <= update_data.score <= 100):
-        raise HTTPException(status_code=400, detail="Score must be between 0 and 100.")
+        raise HTTPException(status_code=400, detail=ERROR_MESSAGE)
     if update_data.budget is not None and update_data.budget < 0:
-        raise HTTPException(status_code=400, detail="Budget must be non-negative.")
+        raise HTTPException(status_code=400, detail=ERROR_MESSAGE)
     if update_data.revenue is not None and update_data.revenue < 0:
-        raise HTTPException(status_code=400, detail="Revenue must be non-negative.")
+        raise HTTPException(status_code=400, detail=ERROR_MESSAGE)
     if update_data.name is not None and len(update_data.name) > 255:
-        raise HTTPException(status_code=400, detail="Name cannot exceed 255 characters.")
+        raise HTTPException(status_code=400, detail=ERROR_MESSAGE)
     if update_data.date is not None and update_data.date > date.today() + timedelta(days=365):
-        raise HTTPException(status_code=400, detail="Date cannot be more than one year in the future.")
+        raise HTTPException(status_code=400, detail=ERROR_MESSAGE)
 
     for key, value in update_data.dict(exclude_unset=True).items():
         setattr(movie, key, value)
@@ -187,6 +193,6 @@ async def update_movie(movie_id: int, update_data: MovieUpdate, db: AsyncSession
         await db.refresh(movie)
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid input data.")
+        raise HTTPException(status_code=400, detail=ERROR_MESSAGE)
 
     return {"detail": "Movie updated successfully."}

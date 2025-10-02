@@ -30,7 +30,7 @@ class CountryOut(BaseModel):
 
     @validator("code")
     def validate_code(cls, v):
-        if len(v) not in (2, 3):
+        if len(v) != 3:
             raise ValueError("Invalid country code")
         return v
 
