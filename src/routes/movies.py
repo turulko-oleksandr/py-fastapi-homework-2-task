@@ -8,7 +8,11 @@ from sqlalchemy import desc, func
 from sqlalchemy.orm import selectinload
 
 from database import get_db
-from schemas.movies import MovieListResponseSchema, MovieListItemSchema, UpdateResponse
+from schemas.movies import (
+    MovieListResponseSchema,
+    MovieListItemSchema,
+    UpdateResponse
+)
 from database.models import (
     MovieModel,
     CountryModel,
@@ -16,7 +20,7 @@ from database.models import (
     ActorModel,
     LanguageModel
 )
-from src.schemas.movies import MovieCreate, MovieDetailSchema, MovieUpdate
+from schemas.movies import MovieCreate, MovieDetailSchema, MovieUpdate
 
 
 router = APIRouter()
@@ -77,13 +81,13 @@ async def get_or_create_entities(db: AsyncSession, model, names: list):
 @router.post("/movies/", response_model=MovieDetailSchema, status_code=201)
 async def create_movie(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
     if movie.score < 0 or movie.score > 100:
-        raise HTTPException(status_code=400, detail="Score must be between 0 and 100.")
+        raise HTTPException(status_code=400, detail="Invalid input data.")
     if movie.budget < 0 or movie.revenue < 0:
-        raise HTTPException(status_code=400, detail="Budget and revenue must be non-negative.")
+        raise HTTPException(status_code=400, detail="Invalid input data.")
     if movie.date > date.today() + timedelta(days=365):
-        raise HTTPException(status_code=400, detail="Date cannot be more than one year in the future.")
+        raise HTTPException(status_code=400, detail="Invalid input data.")
     if len(movie.name) > 255:
-        raise HTTPException(status_code=400, detail="Name cannot exceed 255 characters.")
+        raise HTTPException(status_code=400, detail="Invalid input data.")
 
     exists = await db.scalar(
         select(MovieModel).where(MovieModel.name == movie.name, MovieModel.date == movie.date)
